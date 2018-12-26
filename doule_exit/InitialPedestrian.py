@@ -10,27 +10,24 @@ def creatPeople():
     '''
     allBlock = []  # 用于存放格子
     allPeople = []  # 用于存放行人
-    '''将所有格子全部存入列表'''
+    # 将所有格子全部存入列表'
     for i in range(1, Data.ROOM_M):
         for j in range(1, Data.ROOM_N):
             b = Block.Block()
             b.x = i
             b.y = j
-            if random.random() > 0.5:
+            if random.random() > 0.5: # 顺时针和逆时针行人各占一半
                 b.clock_wise = True
             else:
                 b.clock_wise = False
-            # b.clock_wise = False
+            #----------初始化行人收益-------------
             b.income_inertia = np.zeros(9)
             b.income_wall = np.zeros(9)
             b.income_exit = np.zeros(9)
             b.income_all = np.zeros(9)
-            allBlock.append(b)
-    '''随机排序'''
-    random.shuffle(allBlock)
-    '''取前N个'''
-    '''可有效防止无限产生随机数'''
-    allPeople = allBlock[:Data.PEOPLE_NUMBER]
+            allBlock.append(b) # 添加行人
+    random.shuffle(allBlock) # 随机排序
+    allPeople = allBlock[:Data.PEOPLE_NUMBER] # 取前N个 可有效防止无限产生随机数
     return allPeople
 
 
