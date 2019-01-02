@@ -24,6 +24,7 @@ def creatPeople():
             b.income_inertia = np.zeros(9)
             b.income_wall = np.zeros(9)
             b.income_exit = np.zeros(9)
+            b.income_memory = np.zeros(9)
             b.income_all = np.zeros(9)
             allBlock.append(b) # 添加行人
     random.shuffle(allBlock) # 随机排序
@@ -45,6 +46,7 @@ def creatAppointPeo():
     b3.income_inertia = np.zeros(9)
     b3.income_wall = np.zeros(9)
     b3.income_exit = np.zeros(9)
+    b3.income_memory = np.zeros(9)
     b3.income_all = np.zeros(9)
     allPeople.append(b3)
 

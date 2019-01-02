@@ -306,5 +306,173 @@ def getPedestrianAround(p):
                    [p.x - 1, p.y - 1], [p.x, p.y - 1], [p.x + 1, p.y - 1]))
     return around
 
+
 # ----------------------------------------出口收益-结束----------------------------------
+# ---------------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------------
+# ----------------------------------------记忆角收益----------------------------------
+def judgeQuad(p):
+    '''
+    判断行人与出口位置 即出口位于行人的第几象限
+    以行人为坐标原点
+    :param p:
+    :return: quad < 10 返回出口位于行人第几象限
+             quad > 10 返回出口与行人成多少度（直角）
+             quad = 360 = 0
+    '''
+    e_x = Data.EXIT_X  # 出口x
+    e_y = Data.EXIT_Y  # 出口y
+    p_x = p.x  # 行人x
+    p_y = p.y  # 行人y
+    quad = 0  # 象限
+    if e_y != p_y and e_x != p_x:  # 即行人位于象限内
+        if e_y > p_y and e_x > p_x:  # 判断位置
+            quad = 1
+        elif e_y > p_y and e_x < p_x:
+            quad = 2
+        elif e_y < p_y and e_x < p_x:
+            quad = 3
+        elif e_y < p_y and e_x > p_x:
+            quad = 4
+    elif e_y == p_y and e_x == p_x:  # 即行人正好位于出口
+        pass
+    else:  # 行人位于坐标轴上
+        if e_x == p_x:  # 出口位于x轴上
+            if e_y > p_y:
+                quad = 90
+            else:
+                quad = 270
+        elif e_y == p_y:  # 出口位于y轴上
+            if e_x > p_x:
+                quad = 360
+            else:
+                quad = 180
+    return quad
+
+
+def countAngle(p):
+    '''
+    计算出口与行人所形成的角度
+    :param p:
+    :return: 角度
+    '''
+    e_x = Data.EXIT_X  # 出口x
+    e_y = Data.EXIT_Y  # 出口y
+    p_x = p.x  # 行人x
+    p_y = p.y  # 行人y
+    ratio = np.abs(e_y - p_y) / np.abs(e_x - p_x) # 计算行人与出口所成角度的 tan
+    subAngle = np.degrees(np.arctan(ratio)) # 计算arctan 并返回以角度显示
+    quad = judgeQuad(p) # 判断角度所在象限
+    angle = 0
+    if quad < 10: # 角度位于象限内
+        if quad == 0:
+            pass
+        elif quad == 1: # 第一象限
+            angle = subAngle
+        elif quad == 2: # 第二象限
+            angle = 180 - subAngle
+        elif quad == 3: # 第三象限
+            angle = 180 + subAngle
+        elif quad == 4: # 第四象限
+            angle = 360 - subAngle
+    else: # 位于坐标轴上
+        if quad == 360: # 360 = 0
+            angle = 0
+        else:
+            angle = quad # 等于指定坐标轴
+    return angle # 返回角度
+
+
+def countMemoryAngle(p):
+    '''
+    计算所形成的记忆角的最小值和最大值
+    :param p:
+    :return: 最小记忆角 最大记忆角
+    '''
+    angle = countAngle(p) # 获取出口与行人所形成的角度
+    min_angle = angle - Data.MEMORY_ANGLE / 2 # 最小记忆角
+    max_angle = angle + Data.MEMORY_ANGLE / 2 # 最大记忆角
+    if min_angle < 0: # 0与360处理
+        min_angle = 360 + min_angle
+    if max_angle > 360:
+        max_angle = max_angle - 360
+    # 正常结果 min_angle < max_angle
+    # 在0°附近 可能 min_angle > max_angle
+    return min_angle, max_angle
+
+
+def judeageMemoryArea(p):
+    '''
+    计算记忆角收益
+    :param p:
+    :return:
+    '''
+    min_angle, max_angle = countMemoryAngle(p) # 获取最小 最大记忆角
+    standSec = [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5] # 标准记忆角分割位置
+    max_edge = 0 # 与最大记忆角相邻的分割位置
+    min_edge = 0 # 与最小记忆角相邻的分割位置
+    memoryIncome = np.zeros(9) # 初始化记忆角收益
+    for i in standSec:  # max
+        sub = i - max_angle
+        if sub < 0:
+            if np.abs(sub) / 45 < 1:
+                max_edge = i
+    for j in standSec:  # min
+        sub = min_angle - j
+        if sub < 0:
+            if np.abs(sub) / 45 < 1:
+                min_edge = j
+    if max_angle - min_angle < 45: # 如果记忆角之间没有横跨一个区间
+        memoryIncome[judgeAngleArea((max_angle + min_angle) / 2)] = 1 # 此处有问题
+    else:
+        if (max_edge - min_edge) / 45 == 0:
+            pass
+        elif (max_edge - min_edge) / 45 == 1: # 如果记忆角之间隔了一个区间
+            memoryIncome[judgeAngleArea((max_edge + min_edge) / 2)] = 1 # 该区间收益值= 1
+        elif (max_edge - min_edge) / 45 == 2: # 如果记忆角之间隔了两个区间
+            memoryIncome[judgeAngleArea(max_edge - 10)] = 1 # 该区间收益值 = 1
+            memoryIncome[judgeAngleArea(min_edge + 10)] = 1
+            pass
+        elif (max_edge - min_edge) / 45 == 3: # 如果记忆角之间隔了3个区间
+            memoryIncome[judgeAngleArea(max_edge - 10)] = 1 # 相邻区间收益值 = 1
+            memoryIncome[judgeAngleArea(min_edge + 10)] = 1
+            if max_edge - min_edge < 0: # 中间区间收益值 = 1
+                memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2) + 180)]
+            else:
+                memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2))]
+        elif (max_edge - min_edge) / 45 == 4:  # 最大值取179
+            pass
+    if p.isInMemoryArea: # 如果行人持续留在记忆角范围内
+        p.income_memory = memoryIncome # 赋值
+    # 该语句是为了行人离开记忆角范围后 记忆角收益能持续保留
+
+
+def judgeAngleArea(angle):
+    '''
+    将记忆角与区间联系起来
+    :param angle:
+    :return: 返回记忆角所对应的区间
+    '''
+    area = 4 # 4位静止不同
+    a = angle + np.random.uniform(-0.01, 0.01) # 防止记忆角正好卡在区间边上
+    if a > 112.5 and a < 157.5:
+        area = 0
+    elif a > 67.5 and a < 112.5:
+        area = 1
+    elif a > 22.5 and a < 67.5:
+        area = 2
+    elif a > 157.5 and a < 202.5:
+        area = 3
+    elif (a > 0 and a < 22.5) or (a < 337.5 and a < 360):
+        area = 5
+    elif a > 202.5 and a < 247.5:
+        area = 6
+    elif a > 247.5 and a < 292.5:
+        area = 7
+    elif a > 292.5 and a < 337.5:
+        area = 8
+    return area
+# ----------------------------------------记忆角-结束----------------------------------
 # ---------------------------------------------------------------------------------

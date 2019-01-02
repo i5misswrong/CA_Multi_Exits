@@ -15,7 +15,11 @@ class Block():
         self.isInExitNear = False # 行人是否位于出口附近
         self.WhichExitNear = 0 # 行人位于哪个出口附近
 
+        self.isInMemoryArea = True #行人 是否位于接受记忆角范围内
+                                    # true 是：记忆角收益清零
+                                    # false 否： 记忆角收益保留
         self.income_inertia = 0 # 惯性收益
         self.income_wall = 0 # 墙壁收益
         self.income_exit = 0 # 出口收益
+        self.income_memory = 0 #记忆角收益
         self.income_all = 0 # 总收益
