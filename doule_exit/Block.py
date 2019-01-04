@@ -7,7 +7,7 @@ class Block():
         self.after_direction = 5 # 行人上一步移动方向
 
         self.clock_wise = True # 行人转向偏好 True=clockwise  False=counterclockwise
-
+        self.clock_change_by_income = True
 
         self.isInWallNear = False # 行人是否在墙壁附近
         self.isInWallNear_double = False # 行人是否位于墙壁拐角
@@ -15,7 +15,7 @@ class Block():
         self.isInExitNear = False # 行人是否位于出口附近
         self.WhichExitNear = 0 # 行人位于哪个出口附近
 
-        self.isInMemoryArea = True #行人 是否位于接受记忆角范围内
+        self.isInMemoryArea = False #行人 是否位于接受记忆角范围内
                                     # true 是：记忆角收益清零
                                     # false 否： 记忆角收益保留
         self.income_inertia = 0 # 惯性收益

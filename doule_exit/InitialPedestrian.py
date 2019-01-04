@@ -39,10 +39,10 @@ def creatAppointPeo():
     '''
     allPeople = []
     b3 = Block.Block()
-    b3.x = 30
-    b3.y = 30
+    b3.x = 3
+    b3.y = 10
     b3.type = False
-    b3.clock_wise = True
+    b3.clock_wise = False
     b3.income_inertia = np.zeros(9)
     b3.income_wall = np.zeros(9)
     b3.income_exit = np.zeros(9)

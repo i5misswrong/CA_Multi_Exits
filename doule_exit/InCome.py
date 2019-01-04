@@ -10,31 +10,120 @@ def addAllIncome(p, allPeople):
     :param allPeople:
     :return: 行人移动最终方向
     '''
+    judgeCanGetInf(p)  # 判断行人是否位于获取信息范围内
+    countDistenceWithExits(p)  # 判断你信任是否位于出口范围内
+    countWhichWallNear(p)  # 判断行人是否位于墙壁附近
+
     p.income_inertia = np.zeros(9)
     p.income_wall = np.zeros(9)
     p.income_exit = np.zeros(9)
+    p.income_memory = np.zeros(9)
     p.income_all = np.zeros(9)
-    countWallIncome(p)
-    countDirection(p)
-    countExitIncome(p)
-    countDistenceWithExits(p)
+
+    countDirection(p)  # 计算惯性收益
+    if p.isInWallNear:
+        countWallIncome(p)  # 计算墙壁收益
+        judgeClock(p)  # 计算行人的顺逆时针偏好方向
     if p.isInExitNear:
+        countExitIncome(p)  # 计算出口收益
+    if p.isInMemoryArea:
+        countMemoryIncome(p)  # 计算记忆角收益
+
+
+
+    if p.isInExitNear:  # 如果行人位于出口附近
         p.income_all = np.sum([p.income_exit, p.income_inertia], axis=0)
+    elif p.isInWallNear:
+        p.income_all = np.sum([p.income_wall,p.income_inertia],axis=0)
     else:
-        if p.isInWallNear:
-            p.income_all = np.sum([p.income_inertia, p.income_wall], axis=0)
-        else:
-            p.income_all = np.sum([p.income_inertia], axis=0)
+        p.income_all = np.sum([p.income_memory,p.income_inertia],axis=0)
     # direction = np.argmax(p.income_all)
     time_flag = 0
-
+    income = p.income_all
     while Rule.chickNextCanMove(p, allPeople, np.argmax(p.income_all)) != True:
-        p.income_all[np.argmax(p.income_all)] = 0
+        # p.income_all[np.argmax(p.income_all)] = 0
+        income[np.argmax(income)] = 0
         time_flag += 1
         if time_flag > 2:
-            p.income_all[4] = 100
+            # p.income_all[4] = 100
+            income[4] = 100
 
-    return np.argmax(p.income_all)
+    # return np.argmax(p.income_all)
+    return np.argmax(income)
+
+
+# ---------------------------------------------------------------------------------
+# -----------------------------------判断行人顺逆时针方向-----------------------------------
+def judgeClock(p):
+    income = np.zeros(9)
+    income = np.sum([p.income_inertia, p.income_memory], axis=0)
+    clock = True
+    if p.clock_change_by_income:
+        if p.after_direction == 1:
+            if np.argmax(income) in [0, 3, 7]:
+                clock = False
+            elif np.argmax(income) in [2, 5, 9]:
+                clock = True
+            else:
+                clock = getRamdonSec()
+        elif p.after_direction == 3:
+            if np.argmax(income) in [7, 8, 9]:
+                clock = False
+            elif np.argmax(income) in [0, 1, 2]:
+                clock = True
+            else:
+                clock = getRamdonSec()
+        elif p.after_direction == 5:
+            if np.argmax(income) in [0, 1, 2]:
+                clock = False
+            elif np.argmax(income) in [7, 8, 9]:
+                clock = True
+            else:
+                clock = getRamdonSec()
+        elif p.after_direction == 8:
+            if np.argmax(income) in [2, 5, 9]:
+                clock = False
+            elif np.argmax(income) in [0, 3, 7]:
+                clock = True
+            else:
+                clock = getRamdonSec()
+        elif p.after_direction == 0:
+            if np.argmax(income) in [3, 7, 8]:
+                clock = False
+            elif np.argmax(income) in [1, 2, 5]:
+                clock = True
+            else:
+                clock = getRamdonSec()
+        elif p.after_direction == 2:
+            if np.argmax(income) in [0, 1, 3]:
+                clock = False
+            elif np.argmax(income) in [5, 8, 9]:
+                clock = True
+            else:
+                clock = getRamdonSec()
+        elif p.after_direction == 7:
+            if np.argmax(income) in [5, 8, 9]:
+                clock = False
+            elif np.argmax(income) in [0, 1, 3]:
+                clock = True
+            else:
+                clock = getRamdonSec()
+        elif p.after_direction == 9:
+            if np.argmax(income) in [1, 2, 5]:
+                clock = False
+            elif np.argmax(income) in [3, 7, 8]:
+                clock = True
+            else:
+                clock = getRamdonSec()
+        p.clock_wise = clock
+        p.clock_change_by_income = False
+def getRamdonSec():
+    flag = False
+    if np.random.random() > 0.5:
+        flag = True
+    return flag
+# ----------------------------------判断顺逆时针方向结束-----------------------------
+# ---------------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------------
@@ -362,27 +451,30 @@ def countAngle(p):
     e_y = Data.EXIT_Y  # 出口y
     p_x = p.x  # 行人x
     p_y = p.y  # 行人y
-    ratio = np.abs(e_y - p_y) / np.abs(e_x - p_x) # 计算行人与出口所成角度的 tan
-    subAngle = np.degrees(np.arctan(ratio)) # 计算arctan 并返回以角度显示
-    quad = judgeQuad(p) # 判断角度所在象限
+    try:
+        ratio = np.abs(e_y - p_y) / (np.abs(e_x - p_x) + 0.1)  # 计算行人与出口所成角度的 tan
+    except:
+        print('divisor = 0')
+    subAngle = np.degrees(np.arctan(ratio))  # 计算arctan 并返回以角度显示
+    quad = judgeQuad(p)  # 判断角度所在象限
     angle = 0
-    if quad < 10: # 角度位于象限内
+    if quad < 10:  # 角度位于象限内
         if quad == 0:
             pass
-        elif quad == 1: # 第一象限
+        elif quad == 1:  # 第一象限
             angle = subAngle
-        elif quad == 2: # 第二象限
+        elif quad == 2:  # 第二象限
             angle = 180 - subAngle
-        elif quad == 3: # 第三象限
+        elif quad == 3:  # 第三象限
             angle = 180 + subAngle
-        elif quad == 4: # 第四象限
+        elif quad == 4:  # 第四象限
             angle = 360 - subAngle
-    else: # 位于坐标轴上
-        if quad == 360: # 360 = 0
+    else:  # 位于坐标轴上
+        if quad == 360:  # 360 = 0
             angle = 0
         else:
-            angle = quad # 等于指定坐标轴
-    return angle # 返回角度
+            angle = quad  # 等于指定坐标轴
+    return angle  # 返回角度
 
 
 def countMemoryAngle(p):
@@ -391,10 +483,10 @@ def countMemoryAngle(p):
     :param p:
     :return: 最小记忆角 最大记忆角
     '''
-    angle = countAngle(p) # 获取出口与行人所形成的角度
-    min_angle = angle - Data.MEMORY_ANGLE / 2 # 最小记忆角
-    max_angle = angle + Data.MEMORY_ANGLE / 2 # 最大记忆角
-    if min_angle < 0: # 0与360处理
+    angle = countAngle(p)  # 获取出口与行人所形成的角度
+    min_angle = angle - Data.MEMORY_ANGLE / 2  # 最小记忆角
+    max_angle = angle + Data.MEMORY_ANGLE / 2  # 最大记忆角
+    if min_angle < 0:  # 0与360处理
         min_angle = 360 + min_angle
     if max_angle > 360:
         max_angle = max_angle - 360
@@ -403,17 +495,18 @@ def countMemoryAngle(p):
     return min_angle, max_angle
 
 
-def judeageMemoryArea(p):
+def countMemoryIncome(p):
     '''
     计算记忆角收益
     :param p:
     :return:
     '''
-    min_angle, max_angle = countMemoryAngle(p) # 获取最小 最大记忆角
-    standSec = [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5] # 标准记忆角分割位置
-    max_edge = 0 # 与最大记忆角相邻的分割位置
-    min_edge = 0 # 与最小记忆角相邻的分割位置
-    memoryIncome = np.zeros(9) # 初始化记忆角收益
+    # judgeCanGetInf(p)
+    min_angle, max_angle = countMemoryAngle(p)  # 获取最小 最大记忆角
+    standSec = [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5]  # 标准记忆角分割位置
+    max_edge = 0  # 与最大记忆角相邻的分割位置
+    min_edge = 0  # 与最小记忆角相邻的分割位置
+    memoryIncome = np.zeros(9)  # 初始化记忆角收益
     for i in standSec:  # max
         sub = i - max_angle
         if sub < 0:
@@ -424,28 +517,36 @@ def judeageMemoryArea(p):
         if sub < 0:
             if np.abs(sub) / 45 < 1:
                 min_edge = j
-    if max_angle - min_angle < 45: # 如果记忆角之间没有横跨一个区间
-        memoryIncome[judgeAngleArea((max_angle + min_angle) / 2)] = 1 # 此处有问题
-    else:
-        if (max_edge - min_edge) / 45 == 0:
-            pass
-        elif (max_edge - min_edge) / 45 == 1: # 如果记忆角之间隔了一个区间
-            memoryIncome[judgeAngleArea((max_edge + min_edge) / 2)] = 1 # 该区间收益值= 1
-        elif (max_edge - min_edge) / 45 == 2: # 如果记忆角之间隔了两个区间
-            memoryIncome[judgeAngleArea(max_edge - 10)] = 1 # 该区间收益值 = 1
-            memoryIncome[judgeAngleArea(min_edge + 10)] = 1
-            pass
-        elif (max_edge - min_edge) / 45 == 3: # 如果记忆角之间隔了3个区间
-            memoryIncome[judgeAngleArea(max_edge - 10)] = 1 # 相邻区间收益值 = 1
-            memoryIncome[judgeAngleArea(min_edge + 10)] = 1
-            if max_edge - min_edge < 0: # 中间区间收益值 = 1
-                memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2) + 180)]
+    if max_angle - min_angle > 0:
+        if max_angle - min_angle < 45:  # 如果记忆角之间没有横跨一个区间
+            if judgeAngleArea(max_angle) == judgeAngleArea(min_angle):
+                memoryIncome[judgeAngleArea((max_angle + min_angle) / 2)] = (max_angle - min_angle) / 45
             else:
-                memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2))]
-        elif (max_edge - min_edge) / 45 == 4:  # 最大值取179
-            pass
-    if p.isInMemoryArea: # 如果行人持续留在记忆角范围内
-        p.income_memory = memoryIncome # 赋值
+                memoryIncome[judgeAngleArea(max_angle)] = (max_angle - max_edge) / 45
+                memoryIncome[judgeAngleArea(min_angle)] = (max_edge - min_angle) / 45
+        elif (max_edge - min_edge) / 45 == 1:  # 如果记忆角之间隔了一个区间
+            memoryIncome[judgeAngleArea((max_edge + min_edge) / 2)] = 1  # 该区间收益值= 1
+        elif (max_edge - min_edge) / 45 == 2:  # 如果记忆角之间隔了两个区间
+            memoryIncome[judgeAngleArea(max_edge - 10)] = 1  # 该区间收益值 = 1
+            memoryIncome[judgeAngleArea(min_edge + 10)] = 1
+        elif (max_edge - min_edge) / 45 == 3:  # 如果记忆角之间隔了3个区间
+            memoryIncome[judgeAngleArea(max_edge - 10)] = 1  # 相邻区间收益值 = 1
+            memoryIncome[judgeAngleArea(min_edge + 10)] = 1
+            memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2))] = 1
+    else:
+        if max_angle - min_angle < 45:  # 如果记忆角之间没有横跨一个区间
+            if judgeAngleArea(max_angle) == judgeAngleArea(min_angle):
+                memoryIncome[judgeAngleArea((max_angle + min_angle) / 2 + 180)] = (max_angle - min_angle + 360) / 45
+            else:
+                memoryIncome[judgeAngleArea(max_angle)] = (max_angle - max_edge) / 45
+                memoryIncome[judgeAngleArea(min_angle)] = (max_edge - min_angle) / 45
+        elif (max_edge - min_edge) / 45 == 3:  # 如果记忆角之间隔了3个区间
+            memoryIncome[judgeAngleArea(max_edge - 10)] = 1  # 相邻区间收益值 = 1
+            memoryIncome[judgeAngleArea(min_edge + 10)] = 1
+            memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2) + 180)] = 1
+
+    if p.isInMemoryArea:  # 如果行人持续留在记忆角范围内
+        p.income_memory = memoryIncome  # 赋值
     # 该语句是为了行人离开记忆角范围后 记忆角收益能持续保留
 
 
@@ -455,8 +556,8 @@ def judgeAngleArea(angle):
     :param angle:
     :return: 返回记忆角所对应的区间
     '''
-    area = 4 # 4位静止不同
-    a = angle + np.random.uniform(-0.01, 0.01) # 防止记忆角正好卡在区间边上
+    area = 4  # 4位静止不同
+    a = angle + np.random.uniform(-0.01, 0.01)  # 防止记忆角正好卡在区间边上
     if a > 112.5 and a < 157.5:
         area = 0
     elif a > 67.5 and a < 112.5:
@@ -474,5 +575,23 @@ def judgeAngleArea(angle):
     elif a > 292.5 and a < 337.5:
         area = 8
     return area
+
+
+def judgeCanGetInf(p):
+    '''
+    判断行人是否进入接受信息范围内
+    :param p:
+    :return:
+    '''
+    if np.sqrt((p.x - Data.EXIT_X) ** 2 + (p.y - Data.EXIT_Y) ** 2) < Data.INFORMATION_R:
+        p.isInMemoryArea = True
+
 # ----------------------------------------记忆角-结束----------------------------------
+# ---------------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------------
+# ----------------------------------------多出口影响力----------------------------------
+
+# ----------------------------------------多出口影响力---------------------------------
 # ---------------------------------------------------------------------------------

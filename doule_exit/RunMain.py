@@ -24,6 +24,7 @@ def run_view():
         evacuation_time += 1  # 疏散时间步 计时器+1
         # print('当前时间步:', evacuation_time)  # 输出信息
     # plt.close()
+    print(evacuation_time)
 
 if __name__ == '__main__':
     '''程序入口方法'''
