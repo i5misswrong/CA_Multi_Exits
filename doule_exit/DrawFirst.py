@@ -7,20 +7,19 @@ room_n = Data.ROOM_N
 exit_width = Data.EXIT_WIGTH
 exit_center = 20
 people_number = Data.PEOPLE_NUMBER
-
+exits = Data.EXIT_INDEX
 
 def draw_main(Peoples):
     plt.clf()
     draw_boundary()
-    draw_exit()
     draw_wall()
-    # draw_pedestrian()
     draw_exit()
+    # draw_pedestrian()
     drawPeople(Peoples)
     if Data.FLAG == False:
         plt.close()
     else:
-        plt.pause(0.01)
+        plt.pause(0.2)
 
 
 def count_exit_axis_horizontal():
@@ -42,13 +41,15 @@ def count_exit_axis_horizontal():
 def draw_wall():
     exit_axis = count_exit_axis_horizontal()
     plt.plot([0, room_m], [0, 0], 'k-')  # bottom,
-    plt.plot([0, exit_axis[0][0]], [room_n, room_n], 'k-')  # upper left
-    plt.plot([exit_axis[0][1], room_m], [room_n, room_n], 'k-')  # upper right
+    plt.plot([0,room_m],[room_m,room_m],'k-')
+    # plt.plot([0, exit_axis[0][0]], [room_n, room_n], 'k-')  # upper left
+    # plt.plot([exit_axis[0][1], room_m], [room_n, room_n], 'k-')  # upper right
     plt.plot([0, 0], [0, room_n], 'k-')  # left
     plt.plot([room_m, room_m], [0, room_n], 'k-')  # right
 
     # plt.plot([exit_center - exit_width / 2, exit_center + exit_width / 2], [room_n, room_n])
-    plt.plot([exit_axis[0][0], exit_axis[0][1]], [exit_axis[1][0], exit_axis[1][1]], 'g-', linewidth=6)
+    # plt.plot([exit_axis[0][0], exit_axis[0][1]], [exit_axis[1][0], exit_axis[1][1]], 'g-', linewidth=6)
+    # plt.plot([exit_axis[0][0], exit_axis[0][1]], [exit_axis[1][0], exit_axis[1][1]], 'w-',linewidth=0.1)
     # plt.Rectangle((room_m - exit_width, room_n),exit_width * 2,3)
 
 
@@ -65,8 +66,25 @@ def draw_boundary():
 
 
 def draw_exit():
-    pass
+    if len(exits[0]) == 1:
+        print(exits[0][0])
+        plt.plot([exits[0][0] - Data.EXIT_WIGTH/2,exits[0][0] + Data.EXIT_WIGTH/2],[exits[0][1],exits[0][1]],'w-',linewidth = 2)
+    else:
+        for e in exits[0]:
+            exit_list = []
 
+            if int(e[0]) != 0 and e[0] != Data.ROOM_M:
+                e_x_0 = e[0] - Data.EXIT_WIGTH / 2
+                e_x_1 = e[0] + Data.EXIT_WIGTH / 2
+                exit_list.append(([e_x_0,e[1]]))
+                exit_list.append(([e_x_1,e[1]]))
+            if e[1] != 0.0 and e[1] != Data.ROOM_M:
+                e_y_0 = e[1] - Data.EXIT_WIGTH / 2
+                e_y_1 = e[1] + Data.EXIT_WIGTH / 2
+                exit_list.append(([e[0],e_y_0]))
+                exit_list.append(([e[0],e_y_1]))
+
+            plt.plot([exit_list[0][0],exit_list[1][0]],[exit_list[0][1],exit_list[1][1]],'w-',linewidth=6)
 
 def draw_pedestrian():
     pass

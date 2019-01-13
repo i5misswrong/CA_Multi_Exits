@@ -10,15 +10,20 @@ def addAllIncome(p, allPeople):
     :param allPeople:
     :return: 行人移动最终方向
     '''
+
+    # p.income_inertia = np.zeros(9)
+    # p.income_wall = np.zeros(9)
+    # p.income_exit = np.zeros(9)
+    # p.income_memory = np.zeros(9)
+    p.income_all = np.zeros(9)
+
     judgeCanGetInf(p)  # 判断行人是否位于获取信息范围内
     countDistenceWithExits(p)  # 判断你信任是否位于出口范围内
     countWhichWallNear(p)  # 判断行人是否位于墙壁附近
+    judgePedStay(p)
+    countBlackIncome(p,allPeople)
 
-    p.income_inertia = np.zeros(9)
-    p.income_wall = np.zeros(9)
-    p.income_exit = np.zeros(9)
-    p.income_memory = np.zeros(9)
-    p.income_all = np.zeros(9)
+
 
     countDirection(p)  # 计算惯性收益
     if p.isInWallNear:
@@ -34,7 +39,10 @@ def addAllIncome(p, allPeople):
     if p.isInExitNear:  # 如果行人位于出口附近
         p.income_all = np.sum([p.income_exit, p.income_inertia], axis=0)
     elif p.isInWallNear:
-        p.income_all = np.sum([p.income_wall,p.income_inertia],axis=0)
+        if p.isStaty:
+            p.income_all = np.sum([p.income_wall, p.income_inertia, p.income_block], axis=0)
+        else:
+            p.income_all = np.sum([p.income_wall,p.income_inertia],axis=0)
     else:
         p.income_all = np.sum([p.income_memory,p.income_inertia],axis=0)
     # direction = np.argmax(p.income_all)
@@ -187,6 +195,36 @@ def inertiaIncome(p):
 # ----------------------------------惯性收益-结束-----------------------------------
 # ---------------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------------
+# -----------------------------------空格收益---------------------------------------
+def judgePedStay(p):
+    if len(p.position_dic) < 1:
+        pass
+    else:
+        after_x = p.position_dic[0][0]
+        after_y = p.position_dic[0][1]
+        if np.sqrt((after_x - p.x) ** 2 + (after_y - p.y) ** 2) < 2:
+            p.isStaty = True
+
+def countBlackIncome(p,allPeople):
+    aroundPos = getPedestrianAround(p)
+    block = 0
+    block_income = []
+    for peo in allPeople:
+        if peo.x == p.x and peo.y == p.y:
+            pass
+        else:
+            for j in aroundPos[0]:
+                if j[0] == p.x and j[1] == p.y:
+                    block = 0
+                else:
+                    block = 1
+                block_income.append(block)  # 将计算的收益添加到列表
+    p.block_income = block_income
+# ----------------------------------空格收益-结束-----------------------------------
+# ---------------------------------------------------------------------------------
+
+
 
 # ---------------------------------------------------------------------------------
 # -----------------------------------墙壁收益---------------------------------------
@@ -198,9 +236,10 @@ def countWallIncome(p):
     '''
     p.income_wall = np.zeros(9)
     min_distence, min_distence_2 = countWhichWallNear(p)
-    countWallTurn(p, min_distence)
     if p.isInWallNear_double:
         countWallCornerTurn(p, min_distence, min_distence_2)
+    else:
+        countWallTurn(p, min_distence)
 
 
 def countWhichWallNear(p):
@@ -304,7 +343,7 @@ def countWallCornerTurn(p, min_distence, min_distence_2):
     if p.clock_wise:
         if p.isInWallNear_double:
             if (min_distence == 1 and min_distence_2 == 3) or (min_distence == 3 and min_distence_2 == 1):
-                # p.income_wall[0] = 0.5 + np.random.random() * 0.01
+                p.income_wall[0] = 0.5 + np.random.random() * 0.01
                 p.income_wall[1] = 0.5 + np.random.random() * 0.1
                 p.income_wall[2] = 0.5 + np.random.random() * 0.01
                 p.income_wall[5] = 0.5 + np.random.random() * 0.01
@@ -312,14 +351,14 @@ def countWallCornerTurn(p, min_distence, min_distence_2):
                 p.income_wall[0] = 0.5 + np.random.random() * 0.01
                 p.income_wall[1] = 0.5 + np.random.random() * 0.01
                 p.income_wall[3] = 0.5 + np.random.random() * 0.1
-                # p.income_wall[6] = 0.5 + np.random.random() * 0.01
+                p.income_wall[6] = 0.5 + np.random.random() * 0.01
             elif (min_distence == 0 and min_distence_2 == 2) or (min_distence == 2 and min_distence_2 == 0):
                 p.income_wall[3] = 0.5 + np.random.random() * 0.01
                 p.income_wall[6] = 0.5 + np.random.random() * 0.01
                 p.income_wall[7] = 0.5 + np.random.random() * 0.1
-                # p.income_wall[8] = 0.5 + np.random.random() * 0.01
+                p.income_wall[8] = 0.5 + np.random.random() * 0.01
             elif (min_distence == 1 and min_distence_2 == 2) or (min_distence == 2 and min_distence_2 == 1):
-                # p.income_wall[2] = 0.5 + np.random.random() * 0.01
+                p.income_wall[2] = 0.5 + np.random.random() * 0.01
                 p.income_wall[5] = 0.5 + np.random.random() * 0.1
                 p.income_wall[8] = 0.5 + np.random.random() * 0.01
                 p.income_wall[7] = 0.5 + np.random.random() * 0.01
@@ -327,24 +366,24 @@ def countWallCornerTurn(p, min_distence, min_distence_2):
     else:
         if p.isInWallNear_double:
             if (min_distence == 1 and min_distence_2 == 3) or (min_distence == 3 and min_distence_2 == 1):
-                # p.income_wall[0] = 0.5 + np.random.random() * 0.01
+                p.income_wall[0] = 0.5 + np.random.random() * 0.01
                 p.income_wall[3] = 0.5 + np.random.random() * 0.1
                 p.income_wall[6] = 0.5 + np.random.random() * 0.01
                 p.income_wall[7] = 0.5 + np.random.random() * 0.01
             elif (min_distence == 0 and min_distence_2 == 3) or (min_distence == 3 and min_distence_2 == 0):
                 p.income_wall[5] = 0.5 + np.random.random() * 0.01
-                # p.income_wall[6] = 0.5 + np.random.random() * 0.01
+                p.income_wall[6] = 0.5 + np.random.random() * 0.01
                 p.income_wall[7] = 0.5 + np.random.random() * 0.1
                 p.income_wall[8] = 0.5 + np.random.random() * 0.01
             elif (min_distence == 0 and min_distence_2 == 2) or (min_distence == 2 and min_distence_2 == 0):
                 p.income_wall[1] = 0.5 + np.random.random() * 0.01
                 p.income_wall[2] = 0.5 + np.random.random() * 0.01
                 p.income_wall[5] = 0.5 + np.random.random() * 0.1
-                # p.income_wall[8] = 0.5 + np.random.random() * 0.01
+                p.income_wall[8] = 0.5 + np.random.random() * 0.01
             elif (min_distence == 1 and min_distence_2 == 2) or (min_distence == 2 and min_distence_2 == 1):
                 p.income_wall[0] = 0.5 + np.random.random() * 0.01
                 p.income_wall[1] = 0.5 + np.random.random() * 0.1
-                # p.income_wall[2] = 0.5 + np.random.random() * 0.001
+                p.income_wall[2] = 0.5 + np.random.random() * 0.001
                 p.income_wall[3] = 0.5 + np.random.random() * 0.01
 
 
