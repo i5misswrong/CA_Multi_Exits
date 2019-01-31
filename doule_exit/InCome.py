@@ -21,6 +21,7 @@ def addAllIncome(p, allPeople):
     countDistenceWithExits(p)  # 判断你信任是否位于出口范围内
     countWhichWallNear(p)  # 判断行人是否位于墙壁附近
     judgePedStay(p)
+    # if p.isStaty:
     countBlackIncome(p,allPeople)
 
 
@@ -35,17 +36,16 @@ def addAllIncome(p, allPeople):
         countMemoryIncome(p)  # 计算记忆角收益
 
 
-
-    if p.isInExitNear:  # 如果行人位于出口附近
-        p.income_all = np.sum([p.income_exit, p.income_inertia], axis=0)
-    elif p.isInWallNear:
-        if p.isStaty:
-            p.income_all = np.sum([p.income_wall, p.income_inertia, p.income_block], axis=0)
-        else:
-            p.income_all = np.sum([p.income_wall,p.income_inertia],axis=0)
-    else:
-        p.income_all = np.sum([p.income_memory,p.income_inertia],axis=0)
-    # direction = np.argmax(p.income_all)
+    # if p.isInExitNear:  # 如果行人位于出口附近
+    #     p.income_all = np.sum([p.income_exit, p.income_inertia], axis=0)
+    # # elif p.isInWallNear:
+    # #     if p.isStaty:
+    # #         p.income_all = np.sum([p.income_wall, p.income_inertia, p.income_block], axis=0)
+    # #     else:
+    # #         p.income_all = np.sum([p.income_wall,p.income_inertia],axis=0)
+    # else:
+    p.income_all = np.sum([p.income_memory],axis=0)
+    direction = np.argmax(p.income_all)
     time_flag = 0
     income = p.income_all
     while Rule.chickNextCanMove(p, allPeople, np.argmax(p.income_all)) != True:
@@ -58,6 +58,10 @@ def addAllIncome(p, allPeople):
 
     # return np.argmax(p.income_all)
     return np.argmax(income)
+    # if Rule.chickNextCanMove(p, allPeople, np.argmax(p.income_all)):
+    #     return np.argmax(income)
+    # else:
+    #     return 4
 
 
 # ---------------------------------------------------------------------------------
@@ -66,7 +70,7 @@ def judgeClock(p):
     income = np.zeros(9)
     income = np.sum([p.income_inertia, p.income_memory], axis=0)
     clock = True
-    if p.clock_change_by_income:
+    if p.clock_change_by_income < 1:
         if p.after_direction == 1:
             if np.argmax(income) in [0, 3, 7]:
                 clock = False
@@ -124,7 +128,7 @@ def judgeClock(p):
             else:
                 clock = getRamdonSec()
         p.clock_wise = clock
-        p.clock_change_by_income = False
+        p.clock_change_by_income += 1
 def getRamdonSec():
     flag = False
     if np.random.random() > 0.5:
@@ -218,7 +222,7 @@ def countBlackIncome(p,allPeople):
                 if j[0] == p.x and j[1] == p.y:
                     block = 0
                 else:
-                    block = 1
+                    block = 10
                 block_income.append(block)  # 将计算的收益添加到列表
     p.block_income = block_income
 # ----------------------------------空格收益-结束-----------------------------------
@@ -287,48 +291,48 @@ def countWallTurn(p, min_distence):
     # turn left:
     if p.clock_wise:
         if min_distence == 0:
-            if old_direction == 0 or old_direction == 1 or old_direction == 2:
-                p.income_wall[0] = 0.5 + np.random.random() * 0.01
-                p.income_wall[1] = 0.5 + np.random.random() * 0.01
-                p.income_wall[3] = 0.5 + np.random.random() * 0.1
+            # if old_direction == 0 or old_direction == 1 or old_direction == 2:
+            p.income_wall[0] = 0.5 + np.random.random() * 0.01
+            p.income_wall[1] = 0.5 + np.random.random() * 0.01
+            p.income_wall[3] = 0.5 + np.random.random() * 0.1
         elif min_distence == 1:
-            if old_direction == 6 or old_direction == 7 or old_direction == 8:
-                p.income_wall[5] = 0.5 + np.random.random() * 0.1
-                p.income_wall[7] = 0.5 + np.random.random() * 0.01
-                p.income_wall[8] = 0.5 + np.random.random() * 0.01
+            # if old_direction == 6 or old_direction == 7 or old_direction == 8:
+            p.income_wall[5] = 0.5 + np.random.random() * 0.1
+            p.income_wall[7] = 0.5 + np.random.random() * 0.01
+            p.income_wall[8] = 0.5 + np.random.random() * 0.01
         elif min_distence == 2:
-            if old_direction == 0 or old_direction == 3 or old_direction == 6:
-                p.income_wall[3] = 0.5 + np.random.random() * 0.01
-                p.income_wall[6] = 0.5 + np.random.random() * 0.01
-                p.income_wall[7] = 0.5 + np.random.random() * 0.1
+            # if old_direction == 0 or old_direction == 3 or old_direction == 6:
+            p.income_wall[3] = 0.5 + np.random.random() * 0.01
+            p.income_wall[6] = 0.5 + np.random.random() * 0.01
+            p.income_wall[7] = 0.5 + np.random.random() * 0.1
         elif min_distence == 3:
-            if old_direction == 2 or old_direction == 3 or old_direction == 4:
-                p.income_wall[1] = 0.5 + np.random.random() * 0.1
-                p.income_wall[2] = 0.5 + np.random.random() * 0.01
-                p.income_wall[3] = 0.5 + np.random.random() * 0.01
+            # if old_direction == 2 or old_direction == 3 or old_direction == 4:
+            p.income_wall[1] = 0.5 + np.random.random() * 0.1
+            p.income_wall[2] = 0.5 + np.random.random() * 0.01
+            p.income_wall[3] = 0.5 + np.random.random() * 0.01
 
     # turn right
     else:
         if min_distence == 0:
-            if old_direction == 0 or old_direction == 1 or old_direction == 2:
-                p.income_wall[1] = 0.5 + np.random.random() * 0.01
-                p.income_wall[2] = 0.5 + np.random.random() * 0.01
-                p.income_wall[5] = 0.5 + np.random.random() * 0.1
+            # if old_direction == 0 or old_direction == 1 or old_direction == 2:
+            p.income_wall[1] = 0.5 + np.random.random() * 0.01
+            p.income_wall[2] = 0.5 + np.random.random() * 0.01
+            p.income_wall[5] = 0.5 + np.random.random() * 0.1
         elif min_distence == 1:
-            if old_direction == 6 or old_direction == 7 or old_direction == 8:
-                p.income_wall[3] = 0.5 + np.random.random() * 0.1
-                p.income_wall[6] = 0.5 + np.random.random() * 0.01
-                p.income_wall[7] = 0.5 + np.random.random() * 0.01
+            # if old_direction == 6 or old_direction == 7 or old_direction == 8:
+            p.income_wall[3] = 0.5 + np.random.random() * 0.1
+            p.income_wall[6] = 0.5 + np.random.random() * 0.01
+            p.income_wall[7] = 0.5 + np.random.random() * 0.01
         elif min_distence == 2:
-            if old_direction == 0 or old_direction == 3 or old_direction == 6:
-                p.income_wall[0] = 0.5 + np.random.random() * 0.01
-                p.income_wall[1] = 0.5 + np.random.random() * 0.1
-                p.income_wall[3] = 0.5 + np.random.random() * 0.01
+            # if old_direction == 0 or old_direction == 3 or old_direction == 6:
+            p.income_wall[0] = 0.5 + np.random.random() * 0.01
+            p.income_wall[1] = 0.5 + np.random.random() * 0.1
+            p.income_wall[3] = 0.5 + np.random.random() * 0.01
         elif min_distence == 3:
-            if old_direction == 2 or old_direction == 3 or old_direction == 4:
-                p.income_wall[5] = 0.5 + np.random.random() * 0.01
-                p.income_wall[7] = 0.5 + np.random.random() * 0.1
-                p.income_wall[8] = 0.5 + np.random.random() * 0.01
+            # if old_direction == 2 or old_direction == 3 or old_direction == 4:
+            p.income_wall[5] = 0.5 + np.random.random() * 0.01
+            p.income_wall[7] = 0.5 + np.random.random() * 0.1
+            p.income_wall[8] = 0.5 + np.random.random() * 0.01
 
 
 def countWallCornerTurn(p, min_distence, min_distence_2):
@@ -396,31 +400,82 @@ def countWallCornerTurn(p, min_distence, min_distence_2):
 def countDistenceWithExits(p):
     '''
     计算行人离哪个出口近
+    该方法在addallincome中引用 用于判断行人是否位于出口范围内
     :param p:
     :return:
     '''
-    d_1 = np.sqrt((p.x - Data.EXIT_X) ** 2 + (p.y - Data.EXIT_Y) ** 2)
-    if d_1 < Data.VISIBLE_R:
-        p.isInExitNear = True
-
+    p.exitNearList = [] # 行人位于出口附近的列表 里面存放出口id 需要重置归零
+    exits = Data.EXIT_INDEX # 获取所有出口的xy坐标 ex ey
+    for e in exits[0]: # e为[ex,ey]
+        d_e = np.sqrt((p.x - e[0]) ** 2 + (p.y - e[1]) ** 2) # 计算当前出口与行人的距离
+        if d_e < Data.VISIBLE_R: # 如果位于视野范围内
+        # if d_e < Data.INFORMATION_R:  # 如果位于视野范围内
+            p.exitNearList.append(Data.getExitIndex(e[0],e[1])) # 根据ex ey获取出口id 将出口id放入exitnearlist
+    if len(p.exitNearList) > 0: # 当出口列表不为空时，表示行人位于某个出口内
+        p.isInExitNear = True # 设置行人位于出口范围内
 
 def countExitIncome(p):
     '''
-    计算行人的收益
-    :param p: 单个行人
-    :return: 方向 int
+    计算出口收益
+    :param p:
+    :return:
     '''
     around = getPedestrianAround(p)  # 计算行人周围坐标  返回一个列表 可以debug查看一下
     direction_income = []  # 行人收益存放列表
     dir_income = 0
-    for i in around:  # 遍历around 需要循环2次  根据around结构具体调节循环次数 around在append时又新建了一个列表
-        for j in i:
-            try:  # 在程序终止时 除数为0  捕获异常 完成程序
-                dir_income = (1 / math.sqrt((j[0] - 20) ** 2 + (j[1] - 40) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
-            except:
-                pass
-            direction_income.append(dir_income)  # 将计算的收益添加到列表
+    if len(p.exitNearList) == 0: #如果行人不在出口范围内
+        direction_income = np.zeros(9)
+        pass
+    elif len(p.exitNearList) == 1: # 如果行人只能看到一个出口
+        p.WhichExitNear = p.exitNearList[0]
+        for i in around:  # 遍历around 需要循环2次  根据around结构具体调节循环次数 around在append时又新建了一个列表
+            for j in i:
+                try:  # 在程序终止时 除数为0  捕获异常 完成程序
+                    dir_income = (1 / math.sqrt((j[0] - 20) ** 2 + (j[1] - 40) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
+                except:
+                    pass
+                direction_income.append(dir_income)  # 将计算的收益添加到列表
+    else:
+        exit_force_list = np.zeros(12) # 该列表表示 出口对行人的影响力 F/s 值越大 表示行人越会选择该出口 对应12个出口
+        for i in p.exitNearList: # i为出口id
+            e_x,e_y = Data.getExitPosition(i) # 根据出口id获取出口xy坐标 ex ey
+            if np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) == 0:
+                e_f = Data.EXIT_FORCE
+            else:
+                e_f = Data.EXIT_FORCE / np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2)  # 计算F/S
+            # try:
+            #     e_f = Data.EXIT_FORCE / np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) # 计算F/S
+            # except:
+            #     pass
+            exit_force_list[i] = e_f # 将出口影响力添加到列表
+        exit_select = np.argmax(exit_force_list) # 获取出口影响力列表 的 最大值 的索引 即为行人最终选择的出口id
+        p.WhichExitNear = exit_select
+        ex,ey = Data.getExitPosition(exit_select) # 根据出口id获取出口xy坐标
+        for i in around:  # 遍历around 需要循环2次  根据around结构具体调节循环次数 around在append时又新建了一个列表
+            for j in i:
+                try:  # 在程序终止时 除数为0  捕获异常 完成程序
+                    dir_income = (1 / math.sqrt((j[0] - ex) ** 2 + (j[1] - ey) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
+                except:
+                    pass
+                direction_income.append(dir_income)  # 将计算的收益添加到列表
     p.income_exit = direction_income[:]
+# def countExitIncome(p):
+#     '''
+#     计算行人的收益
+#     :param p: 单个行人
+#     :return: 方向 int
+#     '''
+#     around = getPedestrianAround(p)  # 计算行人周围坐标  返回一个列表 可以debug查看一下
+#     direction_income = []  # 行人收益存放列表
+#     dir_income = 0
+#     for i in around:  # 遍历around 需要循环2次  根据around结构具体调节循环次数 around在append时又新建了一个列表
+#         for j in i:
+#             try:  # 在程序终止时 除数为0  捕获异常 完成程序
+#                 dir_income = (1 / math.sqrt((j[0] - 20) ** 2 + (j[1] - 40) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
+#             except:
+#                 pass
+#             direction_income.append(dir_income)  # 将计算的收益添加到列表
+#     p.income_exit = direction_income[:]
 
 
 def getPedestrianAround(p):
@@ -433,6 +488,7 @@ def getPedestrianAround(p):
     around.append(([p.x - 1, p.y + 1], [p.x, p.y + 1], [p.x + 1, p.y + 1], [p.x - 1, p.y], [p.x, p.y], [p.x + 1, p.y],
                    [p.x - 1, p.y - 1], [p.x, p.y - 1], [p.x + 1, p.y - 1]))
     return around
+
 
 
 # ----------------------------------------出口收益-结束----------------------------------
@@ -450,8 +506,10 @@ def judgeQuad(p):
              quad > 10 返回出口与行人成多少度（直角）
              quad = 360 = 0
     '''
-    e_x = Data.EXIT_X  # 出口x
-    e_y = Data.EXIT_Y  # 出口y
+    exit_index = p.whichExitNearInformation
+    e_x, e_y = Data.getExitPosition(exit_index)  # 出口x
+    # e_x = Data.EXIT_X  # 出口x
+    # e_y = Data.EXIT_Y  # 出口y
     p_x = p.x  # 行人x
     p_y = p.y  # 行人y
     quad = 0  # 象限
@@ -486,8 +544,10 @@ def countAngle(p):
     :param p:
     :return: 角度
     '''
-    e_x = Data.EXIT_X  # 出口x
-    e_y = Data.EXIT_Y  # 出口y
+    exit_index = p.whichExitNearInformation
+    e_x,e_y = Data.getExitPosition(exit_index)  # 出口x
+    # e_x = Data.EXIT_X  # 出口x
+    # e_y = Data.EXIT_Y  # 出口y
     p_x = p.x  # 行人x
     p_y = p.y  # 行人y
     try:
@@ -622,8 +682,35 @@ def judgeCanGetInf(p):
     :param p:
     :return:
     '''
-    if np.sqrt((p.x - Data.EXIT_X) ** 2 + (p.y - Data.EXIT_Y) ** 2) < Data.INFORMATION_R:
-        p.isInMemoryArea = True
+    p.exitNearInformation = []
+    exits = Data.EXIT_INDEX
+    for e in exits[0]:
+        d_e = np.sqrt((p.x - e[0]) ** 2 + (p.y - e[1]) ** 2)  # 计算当前出口与行人的距离
+        if d_e < Data.INFORMATION_R:  # 如果位于视野范围内
+            p.exitNearInformation.append(Data.getExitIndex(e[0], e[1]))  # 根据ex ey获取出口id 将出口id放入
+            p.isInMemoryArea = True
+    if len(p.exitNearInformation) == 0:
+        pass
+    elif len(p.exitNearInformation) == 1:
+        p.whichExitNearInformation = p.exitNearInformation[0]
+    else:
+        exit_force_list = np.zeros(12)
+        for i in p.exitNearInformation:
+            e_x, e_y = Data.getExitPosition(i)
+            if np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) == 0:
+                e_f = Data.EXIT_FORCE
+            else:
+                e_f = Data.EXIT_FORCE / np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2)  # 计算F/S
+            exit_force_list[i] = e_f
+        exit_select = np.argmax(exit_force_list)
+        p.whichExitNearInformation = exit_select
+    # exit_index = p.WhichExitNear
+    # e_x, e_y = Data.getExitPosition(exit_index)  # 出口x
+    # if np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) < Data.INFORMATION_R:
+    #     p.isInMemoryArea = True
+
+
+# todo 记忆角收益中 让其他出口也发出疏散信息
 
 # ----------------------------------------记忆角-结束----------------------------------
 # ---------------------------------------------------------------------------------

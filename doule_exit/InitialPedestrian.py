@@ -11,8 +11,8 @@ def creatPeople():
     allBlock = []  # 用于存放格子
     allPeople = []  # 用于存放行人
     # 将所有格子全部存入列表'
-    for i in range(1, Data.ROOM_M):
-        for j in range(1, Data.ROOM_N):
+    for i in range(2, Data.ROOM_M-1):
+        for j in range(2, Data.ROOM_N-1):
             b = Block.Block()
             b.x = i
             b.y = j
@@ -39,7 +39,7 @@ def creatAppointPeo():
     '''
     allPeople = []
     b3 = Block.Block()
-    b3.x = 3
+    b3.x = 30
     b3.y = 10
     b3.type = False
     b3.clock_wise = False

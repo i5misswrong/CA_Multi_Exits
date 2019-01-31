@@ -10,7 +10,7 @@ class Block():
         self.after_five = 5 # 行人前5步移动方向
 
         self.clock_wise = True # 行人转向偏好 True=clockwise  False=counterclockwise
-        self.clock_change_by_income = True
+        self.clock_change_by_income = 0
 
         self.isStaty = False
 
@@ -19,6 +19,9 @@ class Block():
 
         self.isInExitNear = False # 行人是否位于出口附近
         self.WhichExitNear = 0 # 行人位于哪个出口附近
+        self.whichExitNearInformation = 0
+        self.exitNearList = []
+        self.exitNearInformation = []
 
         self.isInMemoryArea = False #行人 是否位于接受记忆角范围内
                                     # true 是：记忆角收益清零

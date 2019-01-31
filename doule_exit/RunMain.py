@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import DrawFirst,Block,InCome,Rule,InitialPedestrian, Data
@@ -24,11 +25,12 @@ def run_view():
         '''程序终止检测'''
         if len(allPeople) == 0:  # 如果行人都出去了
             Data.FLAG = False  # 更改循环标识符
-        # if evacuation_time > 5:
-        #     Data.FLAG = False
+        # if evacuation_time > 0:
+        #     # Data.FLAG = False
+        #     time.sleep(100)
         evacuation_time += 1  # 疏散时间步 计时器+1
         time_after_step += 1
-        # print('当前时间步:', evacuation_time)  # 输出信息
+        print('当前时间步:', evacuation_time)  # 输出信息
     # plt.close()
     print(evacuation_time)
 
