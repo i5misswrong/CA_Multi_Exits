@@ -29,28 +29,29 @@ def addAllIncome(p, allPeople):
     countDirection(p)  # 计算惯性收益
     if p.isInWallNear:
         countWallIncome(p)  # 计算墙壁收益
-        judgeClock(p)  # 计算行人的顺逆时针偏好方向
+        # judgeClock(p)  # 计算行人的顺逆时针偏好方向
     if p.isInExitNear:
         countExitIncome(p)  # 计算出口收益
     if p.isInMemoryArea:
         countMemoryIncome(p)  # 计算记忆角收益
+    judgeClock(p)
 
 
-    # if p.isInExitNear:  # 如果行人位于出口附近
-    #     p.income_all = np.sum([p.income_exit, p.income_inertia], axis=0)
-    # # elif p.isInWallNear:
-    # #     if p.isStaty:
-    # #         p.income_all = np.sum([p.income_wall, p.income_inertia, p.income_block], axis=0)
-    # #     else:
-    # #         p.income_all = np.sum([p.income_wall,p.income_inertia],axis=0)
-    # else:
-    p.income_all = np.sum([p.income_memory],axis=0)
-    direction = np.argmax(p.income_all)
+    if p.isInExitNear:  # 如果行人位于出口附近
+        p.income_all = np.sum([p.income_exit], axis=0)
+    elif p.isInWallNear:
+        if p.isStaty:
+            p.income_all = np.sum([p.income_memory, p.income_wall, p.income_inertia, p.income_block], axis=0)
+        else:
+            p.income_all = np.sum([p.income_wall,p.income_inertia],axis=0)
+    else:
+        p.income_all = np.sum([p.income_memory],axis=0)
+    # direction = np.argmax(p.income_all)
     time_flag = 0
     income = p.income_all
     while Rule.chickNextCanMove(p, allPeople, np.argmax(p.income_all)) != True:
         # p.income_all[np.argmax(p.income_all)] = 0
-        income[np.argmax(income)] = 0
+        income[np.argmax(p.income_all)] = 0
         time_flag += 1
         if time_flag > 2:
             # p.income_all[4] = 100
@@ -70,7 +71,7 @@ def judgeClock(p):
     income = np.zeros(9)
     income = np.sum([p.income_inertia, p.income_memory], axis=0)
     clock = True
-    if p.clock_change_by_income < 1:
+    if p.clock_change_by_income < 10:
         if p.after_direction == 1:
             if np.argmax(income) in [0, 3, 7]:
                 clock = False
@@ -423,42 +424,56 @@ def countExitIncome(p):
     around = getPedestrianAround(p)  # 计算行人周围坐标  返回一个列表 可以debug查看一下
     direction_income = []  # 行人收益存放列表
     dir_income = 0
-    if len(p.exitNearList) == 0: #如果行人不在出口范围内
-        direction_income = np.zeros(9)
-        pass
-    elif len(p.exitNearList) == 1: # 如果行人只能看到一个出口
-        p.WhichExitNear = p.exitNearList[0]
-        for i in around:  # 遍历around 需要循环2次  根据around结构具体调节循环次数 around在append时又新建了一个列表
-            for j in i:
-                try:  # 在程序终止时 除数为0  捕获异常 完成程序
-                    dir_income = (1 / math.sqrt((j[0] - 20) ** 2 + (j[1] - 40) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
-                except:
-                    pass
-                direction_income.append(dir_income)  # 将计算的收益添加到列表
-    else:
-        exit_force_list = np.zeros(12) # 该列表表示 出口对行人的影响力 F/s 值越大 表示行人越会选择该出口 对应12个出口
-        for i in p.exitNearList: # i为出口id
-            e_x,e_y = Data.getExitPosition(i) # 根据出口id获取出口xy坐标 ex ey
-            if np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) == 0:
-                e_f = Data.EXIT_FORCE
-            else:
-                e_f = Data.EXIT_FORCE / np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2)  # 计算F/S
-            # try:
-            #     e_f = Data.EXIT_FORCE / np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) # 计算F/S
-            # except:
-            #     pass
-            exit_force_list[i] = e_f # 将出口影响力添加到列表
-        exit_select = np.argmax(exit_force_list) # 获取出口影响力列表 的 最大值 的索引 即为行人最终选择的出口id
-        p.WhichExitNear = exit_select
-        ex,ey = Data.getExitPosition(exit_select) # 根据出口id获取出口xy坐标
-        for i in around:  # 遍历around 需要循环2次  根据around结构具体调节循环次数 around在append时又新建了一个列表
-            for j in i:
-                try:  # 在程序终止时 除数为0  捕获异常 完成程序
-                    dir_income = (1 / math.sqrt((j[0] - ex) ** 2 + (j[1] - ey) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
-                except:
-                    pass
-                direction_income.append(dir_income)  # 将计算的收益添加到列表
+    # if len(p.exitNearList) == 0: #如果行人不在出口范围内
+    #     direction_income = np.zeros(9)
+    #     pass
+    # elif len(p.exitNearList) == 1: # 如果行人只能看到一个出口
+    #     p.WhichExitNear = p.exitNearList[0]
+    #     for i in around:  # 遍历around 需要循环2次  根据around结构具体调节循环次数 around在append时又新建了一个列表
+    #         for j in i:
+    #             try:  # 在程序终止时 除数为0  捕获异常 完成程序
+    #                 dir_income = (1 / math.sqrt((j[0] - 20) ** 2 + (j[1] - 40) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
+    #             except:
+    #                 pass
+    #             direction_income.append(dir_income)  # 将计算的收益添加到列表
+    # else:
+    #     exit_force_list = np.zeros(12) # 该列表表示 出口对行人的影响力 F/s 值越大 表示行人越会选择该出口 对应12个出口
+    #     for i in p.exitNearList: # i为出口id
+    #         e_x,e_y = Data.getExitPosition(i) # 根据出口id获取出口xy坐标 ex ey
+    #         if np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) == 0:
+    #             e_f = Data.EXIT_FORCE
+    #         else:
+    #             e_f = Data.EXIT_FORCE / np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2)  # 计算F/S
+    #         # try:
+    #         #     e_f = Data.EXIT_FORCE / np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) # 计算F/S
+    #         # except:
+    #         #     pass
+    #         exit_force_list[i] = e_f # 将出口影响力添加到列表
+    #     exit_select = np.argmax(exit_force_list) # 获取出口影响力列表 的 最大值 的索引 即为行人最终选择的出口id
+    #     p.WhichExitNear = exit_select
+    #     ex,ey = Data.getExitPosition(exit_select) # 根据出口id获取出口xy坐标
+    #     for i in around:  # 遍历around 需要循环2次  根据around结构具体调节循环次数 around在append时又新建了一个列表
+    #         for j in i:
+    #             try:  # 在程序终止时 除数为0  捕获异常 完成程序
+    #                 dir_income = (1 / math.sqrt((j[0] - ex) ** 2 + (j[1] - ey) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
+    #             except:
+    #                 pass
+    #             direction_income.append(dir_income)  # 将计算的收益添加到列表
+    # p.income_exit = direction_income[:]
+
+    ex, ey = Data.getExitPosition(p.WhichExitNear)
+    for i in around:
+        for j in i:
+            try:
+                dir_income = (1 / math.sqrt((j[0] - ex) ** 2 + (j[1] - ey) ** 2)) * 10  # 计算行人周围8个位置到出口的距离 的倒数
+            except:
+                pass
+            direction_income.append(dir_income)
     p.income_exit = direction_income[:]
+
+def countExitForce(p):
+
+    pass
 # def countExitIncome(p):
 #     '''
 #     计算行人的收益
@@ -606,46 +621,87 @@ def countMemoryIncome(p):
     max_edge = 0  # 与最大记忆角相邻的分割位置
     min_edge = 0  # 与最小记忆角相邻的分割位置
     memoryIncome = np.zeros(9)  # 初始化记忆角收益
-    for i in standSec:  # max
-        sub = i - max_angle
-        if sub < 0:
-            if np.abs(sub) / 45 < 1:
-                max_edge = i
+    #todo min=278 max=8
+    # 不存在一个角使得standSec - max_angle < 45
+    # 此处可以用指定max、min_edeg来表示
+    if max_angle < min_angle:
+        if judgeAngleArea(max_angle) == 5:
+            max_edge = 337.5
+    else:
+        for i in standSec:  # max
+            sub = i - max_angle
+            if sub < 0:
+                if np.abs(sub) / 45 < 1:
+                    max_edge = i
     for j in standSec:  # min
         sub = min_angle - j
         if sub < 0:
             if np.abs(sub) / 45 < 1:
                 min_edge = j
     if max_angle - min_angle > 0:
-        if max_angle - min_angle < 45:  # 如果记忆角之间没有横跨一个区间
+        if max_angle - min_angle < 45: # 如果记忆角之间没有横跨一个区间
             if judgeAngleArea(max_angle) == judgeAngleArea(min_angle):
-                memoryIncome[judgeAngleArea((max_angle + min_angle) / 2)] = (max_angle - min_angle) / 45
+                memoryIncome[judgeAngleArea(max_angle)] = (max_angle - min_angle) / 45
             else:
                 memoryIncome[judgeAngleArea(max_angle)] = (max_angle - max_edge) / 45
                 memoryIncome[judgeAngleArea(min_angle)] = (max_edge - min_angle) / 45
         elif (max_edge - min_edge) / 45 == 1:  # 如果记忆角之间隔了一个区间
-            memoryIncome[judgeAngleArea((max_edge + min_edge) / 2)] = 1  # 该区间收益值= 1
+            # memoryIncome[judgeAngleArea((max_edge + min_edge) / 2)] = 1  # 该区间收益值= 1
+            memoryIncome[judgeAngleArea(max_angle)] = (max_angle - max_edge) / 45
+            memoryIncome[judgeAngleArea(min_angle)] = (max_edge - min_angle) / 45
         elif (max_edge - min_edge) / 45 == 2:  # 如果记忆角之间隔了两个区间
             memoryIncome[judgeAngleArea(max_edge - 10)] = 1  # 该区间收益值 = 1
             memoryIncome[judgeAngleArea(min_edge + 10)] = 1
+            memoryIncome[judgeAngleArea(max_angle)] = (max_angle - max_edge) / 45
+            memoryIncome[judgeAngleArea(min_angle)] = (max_edge - min_angle) / 45
         elif (max_edge - min_edge) / 45 == 3:  # 如果记忆角之间隔了3个区间
             memoryIncome[judgeAngleArea(max_edge - 10)] = 1  # 相邻区间收益值 = 1
             memoryIncome[judgeAngleArea(min_edge + 10)] = 1
             memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2))] = 1
+            memoryIncome[judgeAngleArea(max_angle)] = (max_angle - max_edge) / 45
+            memoryIncome[judgeAngleArea(min_angle)] = (max_edge - min_angle) / 45
     else:
-        if max_angle - min_angle < 45:  # 如果记忆角之间没有横跨一个区间
-            if judgeAngleArea(max_angle) == judgeAngleArea(min_angle):
-                memoryIncome[judgeAngleArea((max_angle + min_angle) / 2 + 180)] = (max_angle - min_angle + 360) / 45
-            else:
-                memoryIncome[judgeAngleArea(max_angle)] = (max_angle - max_edge) / 45
-                memoryIncome[judgeAngleArea(min_angle)] = (max_edge - min_angle) / 45
-        elif (max_edge - min_edge) / 45 == 3:  # 如果记忆角之间隔了3个区间
-            memoryIncome[judgeAngleArea(max_edge - 10)] = 1  # 相邻区间收益值 = 1
-            memoryIncome[judgeAngleArea(min_edge + 10)] = 1
-            memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2) + 180)] = 1
+        # if max_angle - min_angle < 45:  # 如果记忆角之间没有横跨一个区间
+        #     if judgeAngleArea(max_angle) == judgeAngleArea(min_angle):
+        #         memoryIncome[judgeAngleArea((max_angle + min_angle) / 2 + 180)] = (max_angle - min_angle + 360) / 45
+        #     else:
+        #         memoryIncome[judgeAngleArea(max_angle)] = (max_angle - max_edge) / 45
+        #         memoryIncome[judgeAngleArea(min_angle)] = (max_edge - min_angle) / 45
+        # -----------max_angle > min_angle 只在5方向中出现-------------------
+        # -------------- 以下针对一些特殊案例做了处理---------------------
+        if judgeAngleArea(max_angle) == judgeAngleArea(min_angle) == 5:
+            if max_angle > 0 and min_angle > 337.5:
+                memoryIncome[5] = (360 - min_angle + max_angle) / 45
+        if judgeAngleArea(max_angle) == 2 and judgeAngleArea(min_angle) == 5:
+            if min_angle > 337.5:
+                memoryIncome[5] = (360 - min_angle + 22.5) / 45
+                memoryIncome[2] = (max_angle - 22.5) / 45
+        if judgeAngleArea(max_angle) == 5 and judgeAngleArea(min_angle) == 8:
+            if max_angle < 22.5:
+                memoryIncome[5] = (max_angle + 22.5) / 45
+                memoryIncome[8] = (337.5 - min_angle) / 45
+        if judgeAngleArea(max_angle) == 2 and judgeAngleArea(min_angle) == 8:
+            memoryIncome[2] = (max_angle - 22.5) / 45
+            memoryIncome[5] = 1
+            memoryIncome[8] = (337.5 -min_angle) / 45
+        if judgeAngleArea(max_angle) == 5 and judgeAngleArea(min_angle) == 7:
+            memoryIncome[8] = 1
+            if max_angle > 0:
+                memoryIncome[5] = (max_angle + 22.5) / 45
+            memoryIncome[7] = (292.5 - min_angle) / 45
+        # if max_angle - min_angle < 45:  # 如果记忆角之间没有横跨一个区间
+        #     # memoryIncome[max_angle] =
+        #     if judgeAngleArea(max_angle) == judgeAngleArea(min_angle):
+        #         memoryIncome[judgeAngleArea(max_angle)] = (360 - min_angle + max_angle) / 45
+        #     if max_angle > 0 and max_angle < 22.5:
+        #         pass
+        # elif (max_edge - min_edge) / 45 == 3:  # 如果记忆角之间隔了3个区间
+        #     memoryIncome[judgeAngleArea(max_edge - 10)] = 1  # 相邻区间收益值 = 1
+        #     memoryIncome[judgeAngleArea(min_edge + 10)] = 1
+        #     memoryIncome[judgeAngleArea(((max_edge + min_edge) / 2) + 180)] = 1
 
     if p.isInMemoryArea:  # 如果行人持续留在记忆角范围内
-        p.income_memory = memoryIncome  # 赋值
+        p.income_memory = memoryIncome * 10  # 赋值
     # 该语句是为了行人离开记忆角范围后 记忆角收益能持续保留
 
 
@@ -665,7 +721,7 @@ def judgeAngleArea(angle):
         area = 2
     elif a > 157.5 and a < 202.5:
         area = 3
-    elif (a > 0 and a < 22.5) or (a < 337.5 and a < 360):
+    elif (a > 0 and a < 22.5) or (a > 337.5 and a < 360):
         area = 5
     elif a > 202.5 and a < 247.5:
         area = 6
@@ -693,6 +749,7 @@ def judgeCanGetInf(p):
         pass
     elif len(p.exitNearInformation) == 1:
         p.whichExitNearInformation = p.exitNearInformation[0]
+        p.WhichExitNear = p.whichExitNearInformation
     else:
         exit_force_list = np.zeros(12)
         for i in p.exitNearInformation:
@@ -704,6 +761,7 @@ def judgeCanGetInf(p):
             exit_force_list[i] = e_f
         exit_select = np.argmax(exit_force_list)
         p.whichExitNearInformation = exit_select
+        p.WhichExitNear = exit_select
     # exit_index = p.WhichExitNear
     # e_x, e_y = Data.getExitPosition(exit_index)  # 出口x
     # if np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) < Data.INFORMATION_R:

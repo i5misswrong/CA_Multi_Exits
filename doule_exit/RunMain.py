@@ -15,7 +15,7 @@ def run_view():
             Rule.chickInExit(p,allPeople)
             direcetion = InCome.addAllIncome(p,allPeople)  # 计算每个行人的移动方向
             p.after_direction = direcetion
-
+            print(p.income_memory)
             Rule.PeopleMove(p, allPeople, direcetion)  # 行人移动
             p.position_dic.append([p.x, p.y])  # 将行人所有位置存入列表
             if time_after_step > 0:
@@ -23,14 +23,15 @@ def run_view():
         DrawFirst.draw_main(allPeople)  # 更新图像
 
         '''程序终止检测'''
-        if len(allPeople) == 0:  # 如果行人都出去了
+        if len(allPeople) < Data.PEOPLE_NUMBER * 0.05:  # 如果行人都出去了
             Data.FLAG = False  # 更改循环标识符
         # if evacuation_time > 0:
         #     # Data.FLAG = False
         #     time.sleep(100)
         evacuation_time += 1  # 疏散时间步 计时器+1
         time_after_step += 1
-        print('当前时间步:', evacuation_time)  # 输出信息
+        if evacuation_time > 60:
+            print('当前时间步:', evacuation_time)  # 输出信息
     # plt.close()
     print(evacuation_time)
 
