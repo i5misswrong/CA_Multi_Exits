@@ -1,24 +1,24 @@
 import math
 import numpy as np
-import Data, Rule
+import Data, Rule, DataCon
 
-
-def addAllIncome(p, allPeople):
+# EXIT_INDEX = DataCon.getExitConfig(DataCon.exit_case)  # 出口列表
+def addAllIncome(p, allPeople, e_index):
     '''
     计算总收益，，返回方向，runmain方法调用
     :param p:
     :param allPeople:
     :return: 行人移动最终方向
     '''
-
+    # EXIT_INDEX = DataCon.getExitConfig(DataCon.exit_case)  # 出口列表
     # p.income_inertia = np.zeros(9)
     # p.income_wall = np.zeros(9)
     # p.income_exit = np.zeros(9)
     # p.income_memory = np.zeros(9)
     p.income_all = np.zeros(9)
 
-    judgeCanGetInf(p)  # 判断行人是否位于获取信息范围内
-    countDistenceWithExits(p)  # 判断你信任是否位于出口范围内
+    judgeCanGetInf(p, e_index)  # 判断行人是否位于获取信息范围内
+    countDistenceWithExits(p, e_index)  # 判断你信任是否位于出口范围内
     countWhichWallNear(p)  # 判断行人是否位于墙壁附近
     judgePedStay(p)
     # if p.isStaty:
@@ -41,11 +41,11 @@ def addAllIncome(p, allPeople):
         p.income_all = np.sum([p.income_exit], axis=0)
     elif p.isInWallNear:
         if p.isStaty:
-            p.income_all = np.sum([p.income_memory, p.income_wall, p.income_inertia, p.income_block], axis=0)
+            p.income_all = np.sum([p.income_memory, p.income_wall, p.income_inertia], axis=0)
         else:
-            p.income_all = np.sum([p.income_wall,p.income_inertia],axis=0)
+            p.income_all = np.sum([p.income_inertia],axis=0)
     else:
-        p.income_all = np.sum([p.income_memory],axis=0)
+        p.income_all = np.sum([p.income_memory, p.income_inertia],axis=0)
     # direction = np.argmax(p.income_all)
     time_flag = 0
     income = p.income_all
@@ -53,9 +53,11 @@ def addAllIncome(p, allPeople):
         # p.income_all[np.argmax(p.income_all)] = 0
         income[np.argmax(p.income_all)] = 0
         time_flag += 1
-        if time_flag > 2:
-            # p.income_all[4] = 100
-            income[4] = 100
+        if time_flag > 9:
+            return 4
+        # if time_flag > 4:
+        #     # p.income_all[4] = 100
+        #     income[4] = 100
 
     # return np.argmax(p.income_all)
     return np.argmax(income)
@@ -398,7 +400,7 @@ def countWallCornerTurn(p, min_distence, min_distence_2):
 
 # ---------------------------------------------------------------------------------
 # ----------------------------------------出口收益----------------------------------
-def countDistenceWithExits(p):
+def countDistenceWithExits(p, e_index):
     '''
     计算行人离哪个出口近
     该方法在addallincome中引用 用于判断行人是否位于出口范围内
@@ -406,12 +408,20 @@ def countDistenceWithExits(p):
     :return:
     '''
     p.exitNearList = [] # 行人位于出口附近的列表 里面存放出口id 需要重置归零
-    exits = Data.EXIT_INDEX # 获取所有出口的xy坐标 ex ey
+    # exits = Data.EXIT_INDEX # 获取所有出口的xy坐标 ex ey
+    exits = DataCon.getExitConfig(e_index)  # 出口列表
     for e in exits[0]: # e为[ex,ey]
-        d_e = np.sqrt((p.x - e[0]) ** 2 + (p.y - e[1]) ** 2) # 计算当前出口与行人的距离
-        if d_e < Data.VISIBLE_R: # 如果位于视野范围内
-        # if d_e < Data.INFORMATION_R:  # 如果位于视野范围内
-            p.exitNearList.append(Data.getExitIndex(e[0],e[1])) # 根据ex ey获取出口id 将出口id放入exitnearlist
+        if type(e) == float or type(e) == int:
+            d_e = np.sqrt((p.x - exits[0][0]) ** 2 + (p.y - exits[0][1]) ** 2)
+        else:
+            d_e = np.sqrt((p.x - e[0]) ** 2 + (p.y - e[1]) ** 2) # 计算当前出口与行人的距离
+        # if d_e < Data.VISIBLE_R: # 如果位于视野范围内
+        if d_e < Data.INFORMATION_R:  # 如果位于视野范围内
+            if type(e) == float or type(e) == int:
+                p.exitNearList.append(DataCon.getExitIndex(exits[0][0], exits[0][1]))
+                pass
+            else:
+                p.exitNearList.append(DataCon.getExitIndex(e[0],e[1])) # 根据ex ey获取出口id 将出口id放入exitnearlist
     if len(p.exitNearList) > 0: # 当出口列表不为空时，表示行人位于某个出口内
         p.isInExitNear = True # 设置行人位于出口范围内
 
@@ -461,7 +471,7 @@ def countExitIncome(p):
     #             direction_income.append(dir_income)  # 将计算的收益添加到列表
     # p.income_exit = direction_income[:]
 
-    ex, ey = Data.getExitPosition(p.WhichExitNear)
+    ex, ey = DataCon.getExitPosition(p.WhichExitNear)
     for i in around:
         for j in i:
             try:
@@ -522,7 +532,7 @@ def judgeQuad(p):
              quad = 360 = 0
     '''
     exit_index = p.whichExitNearInformation
-    e_x, e_y = Data.getExitPosition(exit_index)  # 出口x
+    e_x, e_y = DataCon.getExitPosition(exit_index)  # 出口x
     # e_x = Data.EXIT_X  # 出口x
     # e_y = Data.EXIT_Y  # 出口y
     p_x = p.x  # 行人x
@@ -560,7 +570,7 @@ def countAngle(p):
     :return: 角度
     '''
     exit_index = p.whichExitNearInformation
-    e_x,e_y = Data.getExitPosition(exit_index)  # 出口x
+    e_x,e_y = DataCon.getExitPosition(exit_index)  # 出口x
     # e_x = Data.EXIT_X  # 出口x
     # e_y = Data.EXIT_Y  # 出口y
     p_x = p.x  # 行人x
@@ -732,18 +742,29 @@ def judgeAngleArea(angle):
     return area
 
 
-def judgeCanGetInf(p):
+def judgeCanGetInf(p, e_index):
     '''
     判断行人是否进入接受信息范围内
     :param p:
     :return:
     '''
     p.exitNearInformation = []
-    exits = Data.EXIT_INDEX
+    # exits = Data.EXIT_INDEX
+    exits = DataCon.getExitConfig(e_index)
+    # e_x_0 = exits[0][0] - Data.EXIT_WIGTH / 2
+    # e_x_1 = exits[0][0] - Data.EXIT_WIGTH / 2
+    # exit_list.append(([e_x_0, exits[0][1]]))
+    # exit_list.append(([e_x_1, exits[0][1]]))
     for e in exits[0]:
-        d_e = np.sqrt((p.x - e[0]) ** 2 + (p.y - e[1]) ** 2)  # 计算当前出口与行人的距离
+        if type(e) == float or type(e) == int:
+            d_e = np.sqrt((p.x - exits[0][0]) ** 2 + (p.y - exits[0][1]) ** 2)
+        else:
+            d_e = np.sqrt((p.x - e[0]) ** 2 + (p.y - e[1]) ** 2)  # 计算当前出口与行人的距离
         if d_e < Data.INFORMATION_R:  # 如果位于视野范围内
-            p.exitNearInformation.append(Data.getExitIndex(e[0], e[1]))  # 根据ex ey获取出口id 将出口id放入
+            if type(e) == float or type(e) == int:
+                p.exitNearInformation.append(DataCon.getExitIndex(exits[0][0], exits[0][1]))
+            else:
+                p.exitNearInformation.append(DataCon.getExitIndex(e[0], e[1]))  # 根据ex ey获取出口id 将出口id放入
             p.isInMemoryArea = True
     if len(p.exitNearInformation) == 0:
         pass
@@ -753,7 +774,7 @@ def judgeCanGetInf(p):
     else:
         exit_force_list = np.zeros(12)
         for i in p.exitNearInformation:
-            e_x, e_y = Data.getExitPosition(i)
+            e_x, e_y = DataCon.getExitPosition(i)
             if np.sqrt((p.x - e_x) ** 2 + (p.y - e_y) ** 2) == 0:
                 e_f = Data.EXIT_FORCE
             else:

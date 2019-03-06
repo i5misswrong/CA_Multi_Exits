@@ -1,4 +1,4 @@
-import Data
+import Data, DataCon
 
 
 def PeopleMove(p, allPeople, direction):
@@ -51,7 +51,7 @@ def chickInExit(p, allPeople):
     flag = False
     w = Data.EXIT_WIGTH / 2
     for i in p.exitNearList:
-        e_x, e_y = Data.getExitPosition(i)
+        e_x, e_y = DataCon.getExitPosition(i)
         if i == 0 or i == 1 or i == 2: # upper
             if p.x >= e_x - w and p.x <= e_x + w and p.y == Data.ROOM_M - 1:
                 flag = True
@@ -104,7 +104,7 @@ def chickNextCanMove(p,allPeople,direction):
 
     w = Data.EXIT_WIGTH / 2
     for i in p.exitNearList:
-        e_x, e_y = Data.getExitPosition(i)
+        e_x, e_y = DataCon.getExitPosition(i)
         if i == 0 or i == 1 or i == 2:  # upper
             if p.x >= e_x - w and p.x <= e_x + w and p.y == Data.ROOM_M - 1:
                 exit_flag = True

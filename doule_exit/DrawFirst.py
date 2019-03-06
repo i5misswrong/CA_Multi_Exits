@@ -1,19 +1,21 @@
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons
-import Data, Block, InitialPedestrian
+import Data, Block, InitialPedestrian, DataCon
+
+# EXIT_INDEX = DataCon.getExitConfig(DataCon.exit_case)  # 出口列表
 
 room_m = Data.ROOM_M
 room_n = Data.ROOM_N
 exit_width = Data.EXIT_WIGTH
 exit_center = 20
 people_number = Data.PEOPLE_NUMBER
-exits = Data.EXIT_INDEX
-
-def draw_main(Peoples):
+# exits = Data.EXIT_INDEX
+# exits = EXIT_INDEX
+def draw_main(Peoples, e_index):
     plt.clf()
     draw_boundary()
     draw_wall()
-    draw_exit()
+    draw_exit(e_index)
     # draw_pedestrian()
     drawPeople(Peoples)
     if Data.FLAG == False:
@@ -65,24 +67,32 @@ def draw_boundary():
     plt.plot([-3, room_m + 3], [room_n + 3, room_n + 3], 'k-')  # upper
 
 
-def draw_exit():
+def draw_exit(e_index):
+    EXIT_INDEX = DataCon.getExitConfig(e_index)  # 出口列表
+    exits = EXIT_INDEX
     if len(exits[0]) == 1:
         print(exits[0][0])
         plt.plot([exits[0][0] - Data.EXIT_WIGTH/2,exits[0][0] + Data.EXIT_WIGTH/2],[exits[0][1],exits[0][1]],'w-',linewidth = 2)
     else:
+
         for e in exits[0]:
             exit_list = []
-
-            if int(e[0]) != 0 and e[0] != Data.ROOM_M:
-                e_x_0 = e[0] - Data.EXIT_WIGTH / 2
-                e_x_1 = e[0] + Data.EXIT_WIGTH / 2
-                exit_list.append(([e_x_0,e[1]]))
-                exit_list.append(([e_x_1,e[1]]))
-            if e[1] != 0.0 and e[1] != Data.ROOM_M:
-                e_y_0 = e[1] - Data.EXIT_WIGTH / 2
-                e_y_1 = e[1] + Data.EXIT_WIGTH / 2
-                exit_list.append(([e[0],e_y_0]))
-                exit_list.append(([e[0],e_y_1]))
+            if type(e) == float or type(e) == int:
+                e_x_0 = exits[0][0] - Data.EXIT_WIGTH / 2
+                e_x_1 = exits[0][0] + Data.EXIT_WIGTH / 2
+                exit_list.append(([e_x_0,exits[0][1]]))
+                exit_list.append(([e_x_1,exits[0][1]]))
+            else:
+                if int(e[0]) != 0 and e[0] != Data.ROOM_M:
+                    e_x_0 = e[0] - Data.EXIT_WIGTH / 2
+                    e_x_1 = e[0] + Data.EXIT_WIGTH / 2
+                    exit_list.append(([e_x_0,e[1]]))
+                    exit_list.append(([e_x_1,e[1]]))
+                if e[1] != 0.0 and e[1] != Data.ROOM_M:
+                    e_y_0 = e[1] - Data.EXIT_WIGTH / 2
+                    e_y_1 = e[1] + Data.EXIT_WIGTH / 2
+                    exit_list.append(([e[0],e_y_0]))
+                    exit_list.append(([e[0],e_y_1]))
 
             plt.plot([exit_list[0][0],exit_list[1][0]],[exit_list[0][1],exit_list[1][1]],'w-',linewidth=6)
 
